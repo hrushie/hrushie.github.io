@@ -152,7 +152,7 @@ echo "$NEWLINE""$RELEASE_NOTES1" >> release_notes.txt'''
     	step([$class: 'HockeyappRecorder',
 			applications: [[apiToken: '41f5cf2e56fe48d2bd099f98a4011184',
       downloadAllowed: false,
-			filePath: 'app/build/outputs/apk/Mcdonalds-release.apk',
+			filePath: 'app/build/outputs/apk/app-QA-release.apk',
 			mandatory: false, notifyTeam: true,
 			releaseNotesMethod: [$class: 'NoReleaseNotes'],
 			uploadMethod: [$class: 'VersionCreation',
