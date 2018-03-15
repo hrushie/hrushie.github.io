@@ -6,13 +6,7 @@ pipeline {
 
   		 }
 
-	parameters{
-		string(defaultValue: 'dap-develop', description: '', name: 'ARCH_BRANCH')
-		string(defaultValue: 'dap-develop', description: '', name: 'APPCORE_BRANCH')
-		string(defaultValue: 'dap-develop', description: '', name: 'UIKIT_BRANCH')
-		string(defaultValue: 'dap-develop', description: '', name: 'SDK_BRANCH')}
-
-
+	
   stages {
 
   	stage('SCM') {
