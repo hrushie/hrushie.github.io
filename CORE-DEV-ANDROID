@@ -131,7 +131,7 @@ echo "$NEWLINE""$RELEASE_NOTES1" >> release_notes.txt'''
       steps {
         sh '''
 	  #run build
-	  ./gradlew clean assembleUSRelease
+	  ./gradlew clean assembleQARelease
 	 '''
     }
     }
