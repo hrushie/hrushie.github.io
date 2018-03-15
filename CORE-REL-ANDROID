@@ -135,7 +135,7 @@ cd ${WORKSPACE}'''
       steps {
         sh '''
 	  #run build
-	  ./gradlew clean assembleUSRelease
+	  ./gradlew clean assembleQARelease
 	 '''
     }
     }
