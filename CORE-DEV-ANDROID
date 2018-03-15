@@ -120,11 +120,7 @@ echo "$RELEASE_NOTES1"
 echo `cat timestamp.txt` > release_notes.txt
 echo "$NEWLINE""$RELEASE_NOTES" >> release_notes.txt
 echo "$NEWLINE""$RELEASE_NOTES1" >> release_notes.txt'''
-sh '''cd ${WORKSPACE}
-cd app/src/main/assets
-export PATH=/usr/local/bin:$PATH
-for i in gma_build*.json; do echo "$i"; sed -e 's|/\*.*\*/||g' -e 's|// .*||g' "$i" > tmp.$$.json && mv tmp.$$.json "$i"; jq '.newRelic.appId = "AA553f77b49e172116033cf200bfd0dce549e4240f"' "$i" > tmp.$$.json && mv tmp.$$.json "$i"; done
-cd ${WORKSPACE}'''
+
 
 
           }
