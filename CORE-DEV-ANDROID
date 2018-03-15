@@ -10,7 +10,11 @@ pipeline {
 		string(defaultValue: 'develop', description: '', name: 'ARCH_BRANCH')
 		string(defaultValue: 'develop', description: '', name: 'APPCORE_BRANCH')
 		string(defaultValue: 'develop', description: '', name: 'UIKIT_BRANCH')
-		string(defaultValue: 'feature/GMA-5.x', description: '', name: 'SDK_BRANCH')}
+		string(defaultValue: 'feature/GMA-5.x', description: '', name: 'SDK_BRANCH')
+		text(defaultValue: '', description: '', name: 'RELEASE_NOTES') 
+		string(defaultValue: 'DEC 01 2017', description: '', name: 'START_DATE')
+		string(defaultValue: 'DEC 22 2017', description: '', name: 'END_DATE')
+		}
 
 
   stages {
