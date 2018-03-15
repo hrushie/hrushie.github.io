@@ -1,0 +1,209 @@
+pipeline {
+  agent any
+  options{
+  	timestamps()
+	gitLabConnection('')
+
+  		 }
+
+	parameters{
+		string(defaultValue: 'beta/2018.03-dap', description: '', name: 'ARCH_BRANCH')
+		string(defaultValue: 'beta/2018.03-dap', description: '', name: 'APPCORE_BRANCH')
+		string(defaultValue: 'beta/2018.03-dap', description: '', name: 'UIKIT_BRANCH')
+		string(defaultValue: 'beta/2018.03-dap', description: '', name: 'SDK_BRANCH')}
+
+
+  stages {
+
+  	stage('SCM') {
+
+		steps{
+  		checkout([$class: 'GitSCM',
+			  branches: [[name: 'beta/2018.03-dap']],
+			  doGenerateSubmoduleConfigurations: false,
+			  extensions: [[$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: '', timeout: 15, trackingSubmodules: true]],
+			  submoduleCfg: [],
+			  userRemoteConfigs: [[credentialsId: 'c39b0118-cfc4-4024-ac99-cdf2f69ed733', url: 'ssh://git@coderepository.mcd.com:8443/gma5_us/android.git']]])
+			}
+  		}
+
+        stage('Checkout') {
+          steps {
+            sh '''echo "*******************Updating submodule*************************"
+MCDARCH_DIR=${WORKSPACE}
+MCDAPPCORE_DIR="${MCDARCH_DIR}/libraries/android-mcd-core-app"
+MCDUIKIT_DIR="${MCDARCH_DIR}/libraries/android-mcd-core-app/libraries/android-mcd-uikit"
+MCDCONNECT_DIR="${MCDARCH_DIR}/libraries/android-mcd-core-app/libraries/android-gma-sdk-sapient"
+ARCH_BRANCH=${GIT_BRANCH#*/}
+APPCORE_BRANCH=${GIT_BRANCH#*/}
+UIKIT_BRANCH=${GIT_BRANCH#*/}
+SDK_BRANCH=${GIT_BRANCH#*/}
+
+echo "*************Checking out McDAppARCH Repository*****************"
+cd "${MCDARCH_DIR}"
+git gc --prune=now
+git checkout dap-develop
+git submodule
+git submodule init
+git branch
+git submodule update --checkout --recursive
+git log --pretty=format:'%h' -n 1
+
+echo "*************Checking out McDAppCore Repository*****************"
+cd "${MCDAPPCORE_DIR}"
+git gc --prune=now
+git checkout dap-develop
+git pull
+git branch
+#git reset --hard
+git pull
+git submodule update --checkout --recursive
+git checkout dap-develop
+git log --pretty=format:'%h' -n 1
+
+echo "*************Checking out McDonaldsSDK Repository*****************"
+cd "${MCDCONNECT_DIR}"
+git gc --prune=now
+git checkout dap-develop
+git pull
+git branch
+#git reset --hard
+git pull
+git submodule update --checkout --recursive
+git checkout dap-develop
+git log --pretty=format:'%h' -n 1
+
+echo "*************Checking out McDUIKit Repository*****************"
+cd "${MCDUIKIT_DIR}"
+git gc --prune=now
+git checkout dap-develop
+git pull
+git branch
+#git reset --hard
+git pull
+git submodule update --checkout --recursive
+git checkout dap-develop
+git log --pretty=format:'%h' -n 1'''
+
+sh '''MCDARCH_DIR="${WORKSPACE}"
+MCDAPPCORE_DIR="${MCDARCH_DIR}/libraries/android-mcd-core-app"
+MCDSDK_DIR="${MCDARCH_DIR}/libraries/android-mcd-core-app/libraries/android-gma-sdk-sapient"
+MCDUIKIT_DIR="${MCDARCH_DIR}/libraries/android-mcd-core-app/libraries//android-mcd-uikit"
+
+RELEASE_NOTES=""
+NEWLINE=$'\n'
+
+
+echo "****************Finding Merge commits in ARCH Repo*******************"
+cd ${MCDARCH_DIR}
+rm -rf release_notes.txt
+MERGE_COMMITS=$(git log --since="$LAST_BUILD_DATE" --first-parent --pretty=format:"%H" --merges)
+
+for commit in $MERGE_COMMITS; do
+RELEASE_NOTES+="$NEWLINE"
+RELEASE_NOTES+=`git log $commit^..$commit --pretty=format:"%s" --no-merges`
+done
+
+
+echo "****************Finding Merge commits in APP-CORE Repo*******************"
+cd "${MCDAPPCORE_DIR}"
+MERGE_COMMITS=$(git log --since="$LAST_BUILD_DATE" --first-parent --pretty=format:"%H" --merges)
+
+for commit in $MERGE_COMMITS; do
+RELEASE_NOTES+="$NEWLINE"
+RELEASE_NOTES+=`git log $commit^..$commit --pretty=format:"%s" --no-merges`
+done
+
+
+echo "****************Finding Merge commits in UI-KIT Repo*******************"
+cd "${MCDUIKIT_DIR}"
+MERGE_COMMITS=$(git log --since="$LAST_BUILD_DATE" --first-parent --pretty=format:"%H" --merges)
+
+for commit in $MERGE_COMMITS; do
+RELEASE_NOTES+="$NEWLINE"
+RELEASE_NOTES+=`git log $commit^..$commit --pretty=format:"%s" --no-merges`
+done
+
+
+echo "****************Finding Merge commits in SDK Repo*******************"
+cd "${MCDSDK_DIR}"
+MERGE_COMMITS=$(git log --since="$LAST_BUILD_DATE" --first-parent --pretty=format:"%H" --merges)
+
+for commit in $MERGE_COMMITS; do
+RELEASE_NOTES+="$NEWLINE"
+RELEASE_NOTES+=`git log $commit^..$commit --pretty=format:"%s" --no-merges`
+done
+
+cd ${MCDARCH_DIR}
+echo "$RELEASE_NOTES" > release_notes.txt'''
+sh ''' MCDAPP_DIR=${WORKSPACE}
+cd ..
+cp -f /android/uskeystore/release.keystore .
+cd "${MCDAPP_DIR}"
+cp -f /android/uskeystore/keystore.properties .'''
+
+
+          }
+        }
+
+
+   stage('Build') {
+      steps {
+        sh '''
+	  #run build
+	  ./gradlew clean assembleUSDEVDebug
+	 '''
+    }
+    }
+
+/*tage('Test') {
+      steps {
+        sh './gradlew cleanTest test jacocoTestReport --continue --info'
+      }
+    } */
+
+
+    stage('Hockeyapp') {
+    	steps {
+    	step([$class: 'HockeyappRecorder',
+			applications: [[apiToken: '41f5cf2e56fe48d2bd099f98a4011184',
+      downloadAllowed: false,
+			filePath: 'app/build/outputs/apk/app-USDEV-debug.apk',
+			mandatory: false, notifyTeam: true,
+			releaseNotesMethod: [$class: 'NoReleaseNotes'],
+			uploadMethod: [$class: 'VersionCreation',
+			appId: '3c1e5e8358814ec19616f1fb57495fbc']]],
+			debugMode: false,
+			failGracefully: false])
+
+    	 	 }
+}
+    }
+ post {
+
+		success {
+
+			emailext (
+          		subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+          		body: """<p>SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+          		  <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
+         		recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+            to: 'rushikesh.jawali@capgemini.com'
+				)
+
+		}
+
+
+	        failure {
+
+			emailext (
+          		subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+          		body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+          		  <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
+          		recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+              to: 'rushikesh.jawali@capgemini.com'
+       			 	)
+
+        }
+    }
+}
