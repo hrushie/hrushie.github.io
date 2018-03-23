@@ -23,7 +23,7 @@ pipeline {
 			  doGenerateSubmoduleConfigurations: false,
 			  extensions: [[$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: '', trackingSubmodules: true]],
 			  submoduleCfg: [],
-			  userRemoteConfigs: [[credentialsId: 'c39b0118-cfc4-4024-ac99-cdf2f69ed733', url: 'ssh://git@coderepository.mcd.com:8443/gma5_us/android.git']]])
+			  userRemoteConfigs: [[credentialsId: '1f647204-0cb4-455b-88c9-081180b610d7', url: 'ssh://git@coderepository.mcd.com:8443/gma5_us/android.git']]])
 			}
   		}
 
