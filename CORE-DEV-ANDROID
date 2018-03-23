@@ -1,6 +1,12 @@
 pipeline {
-  agent any
-  options{
+agent {
+    // This also could have been 'agent any' - that has the same meaning.
+    label "iOS"
+    // Other possible built-in agent types are 'agent none', for not running the
+    // top-level on any agent (which results in you needing to specify agents on
+    // each stage and do explicit checkouts of scm in those stages), 'docker',
+    // and 'dockerfile'.
+  }  options{
   	timestamps()
 	gitLabConnection('')
 
